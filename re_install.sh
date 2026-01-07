@@ -34,6 +34,21 @@ read -r PERSISTENT_PATH
 echo "Are you running this script on node1 (yes/no)?"
 read -r ON_NODE1
 
+# SSH credentials (optional)
+echo "Enter SSH username:"
+read -r SSH_USER
+SSH_USER=${SSH_USER:-abhishek}
+echo "Enter SSH password for ${SSH_USER} (leave blank to use key-based auth):"
+read -r -s SSH_PASS
+echo
+
+# Configure SSH options: disable BatchMode when password is provided
+if [[ -n "${SSH_PASS}" ]]; then
+    SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+else
+    SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes"
+fi
+
 
 # # Ensure PERSISTENT_PATH is set and create/override the "persist" directory
 # if [[ -z "${PERSISTENT_PATH:-}" ]]; then
@@ -71,18 +86,38 @@ if [ "$CONFIRM" != "Y" ]; then
     exit 1
 fi
 
-SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes"
-
 
 # Helper to run a command on a remote host (or local when host matches local IP)
 run_cmd() {
     local host="$1"; shift
-    if [[ "$host" == "localhost" || \
-          "$host" == "127.0.0.1" || \
-          ( "${EXEC_IS_LOCAL}" == "true" && "$host" == "$NODE1" ) ]]; then
-        bash -c "$*"
+    local cmd="$*"
+
+    # Local execution when target is local or executing locally on NODE1
+    if [[ "$host" == "localhost" || "$host" == "127.0.0.1" || ( "${EXEC_IS_LOCAL}" == "true" && "$host" == "$NODE1" ) ]]; then
+        if [[ -n "${SSH_PASS:-}" && "$cmd" == *"sudo "* ]]; then
+            # provide sudo password on local execution
+            echo "${SSH_PASS}" | sudo -S bash -lc "$cmd"
+        else
+            bash -c "$cmd"
+        fi
+        return
+    fi
+
+    # Remote execution
+    local target="${SSH_USER}@${host}"
+
+    # If a password is provided, ensure sshpass exists
+    if [[ -n "${SSH_PASS:-}" ]]; then
+        if ! command -v sshpass >/dev/null 2>&1; then
+            echo "Error: 'sshpass' is required when supplying SSH password. Install it and re-run (e.g. sudo apt install -y sshpass)." >&2
+            exit 1
+        fi
+     
+        sshpass -p "${SSH_PASS}" ssh $SSH_OPTS ${target}
+        
     else
-        ssh $SSH_OPTS "$host" "$*"
+        # Key-based auth path
+        ssh $SSH_OPTS "${target}" "$cmd"
     fi
 }
 
@@ -136,7 +171,9 @@ echo "Waiting for services to initialize on node1..."
 sleep 60
 
 # Attempt to create cluster using rladmin. This is a standard invocation; if it fails, output will show.
-CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} --overwrite-existing "
+#CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} --overwrite-existing "
+CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} --overwrite-existing "
+
 run_cmd "$NODE1" "$CREATE_CLUSTER_CMD"
 
 echo
@@ -162,7 +199,9 @@ join_node() {
         sleep 5
     done
 
-    local join_cmd="sudo ${RLADMIN} cluster join nodes ${NODE1} ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} username ${ADMIN_USER} password ${ADMIN_PASS}"
+    #local join_cmd="sudo ${RLADMIN} cluster join nodes ${NODE1} ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} username ${ADMIN_USER} password ${ADMIN_PASS}"
+    local join_cmd="sudo ${RLADMIN} cluster join nodes ${NODE1} username ${ADMIN_USER} password ${ADMIN_PASS}"
+
     local attempt=1
     local max_attempts=5
 
