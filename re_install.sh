@@ -122,7 +122,7 @@ run_cmd() {
             exit 1
         fi
         echo "Using sshpass to connect to ${target}"
-        sshpass -p "${SSH_PASS}" ssh $SSH_OPTS ${target}
+        sshpass -p "${SSH_PASS}" ssh $SSH_OPTS ${target} "$cmd"
         
     else
         # Key-based auth path
