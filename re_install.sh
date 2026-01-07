@@ -11,18 +11,26 @@ REMOTE_TMP="/tmp/${TARBALL_NAME}"
 INSTALL_DIR="/tmp/redis_enterprise_install"
 RLADMIN="/opt/redislabs/bin/rladmin"
 
-echo "Enter IP address of node1:"
-read -r NODE1
-echo "Enter IP address of node2:"
-read -r NODE2
-echo "Enter IP address of node3:"
-read -r NODE3
-echo "Enter FQDN for the cluster (example: mycluster.example.com):"
-read -r CLUSTER_FQDN
-echo "Enter Cluster Admin username (example: admin@example.com):"
-read -r ADMIN_USER
-echo "Enter Cluster Admin password:"
-read -r ADMIN_PASS
+# echo "Enter IP address of node1:"
+# read -r NODE1
+# echo "Enter IP address of node2:"
+# read -r NODE2
+# echo "Enter IP address of node3:"
+# read -r NODE3
+# echo "Enter FQDN for the cluster (example: mycluster.example.com):"
+# read -r CLUSTER_FQDN
+# echo "Enter Cluster Admin username (example: admin@example.com):"
+# read -r ADMIN_USER
+# echo "Enter Cluster Admin password:"
+# read -r ADMIN_PASS
+
+NODE1="localhost"
+NODE2="10.1.0.6"
+NODE3="10.1.0.8"
+CLUSTER_FQDN="mycluster.example.com"
+ADMIN_USER="admin@example.com"
+ADMIN_PASS="admin"
+PERSISTENT_PATH="/mnt/mydata"
 
 
 # /mnt/mydata
@@ -41,6 +49,9 @@ SSH_USER=${SSH_USER:-abhishek}
 echo "Enter SSH password for ${SSH_USER} (leave blank to use key-based auth):"
 read -r -s SSH_PASS
 echo
+
+SSH_USER="abhishek"
+SSH_PASS="Password@123"
 
 # Configure SSH options: disable BatchMode when password is provided
 if [[ -n "${SSH_PASS}" ]]; then
@@ -112,7 +123,7 @@ run_cmd() {
             echo "Error: 'sshpass' is required when supplying SSH password. Install it and re-run (e.g. sudo apt install -y sshpass)." >&2
             exit 1
         fi
-     
+        echo "Using sshpass to connect to ${target}"
         sshpass -p "${SSH_PASS}" ssh $SSH_OPTS ${target}
         
     else
