@@ -116,7 +116,7 @@ install_node() {
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
     # find the extracted folder
-    run_cmd "$host" "cd ${INSTALL_DIR} && DIR=\$(ls -1 | head -n1) && cd \$DIR && sudo ./install.sh -y || (echo 'Installer failed on $host' >&2; exit 1)"
+    run_cmd "$host" "cd ${INSTALL_DIR} && sudo ./install.sh -y || (echo 'Installer failed on $host' >&2; exit 1)"
 }
 
 # Run preinstall and install on each node
