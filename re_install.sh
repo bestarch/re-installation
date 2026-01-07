@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# GitHub Copilot
-# Interactive installer script to deploy a 3-node Redis Enterprise cluster on Ubuntu (Jammy).
-# Usage: run this script and follow prompts. SSH key-based access to nodes is assumed.
+# Interactive installer script to deploy a 3-node Redis Enterprise cluster on Ubuntu.
 
 set -euo pipefail
 
@@ -24,6 +22,19 @@ read -r ADMIN_USER
 echo "Enter Cluster Admin password:"
 read -r ADMIN_PASS
 
+# SSH credentials (to login to nodes)
+echo "Enter SSH username:"
+read -r SSH_USER
+echo "Enter SSH password for ${SSH_USER} (leave blank to use key-based auth):"
+read -r -s SSH_PASS
+
+echo "Enter persistence path (where external disk is mounted e.g /mnt/mydata):"
+read -r PERSISTENT_PATH
+
+# Are we running this script on node1 or on a separate server?
+echo "Are you running this script on node1 (yes/no)?"
+read -r ON_NODE1
+
 # NODE1="localhost"
 # NODE2="10.1.0.6"
 # NODE3="10.1.0.8"
@@ -31,24 +42,6 @@ read -r ADMIN_PASS
 # ADMIN_USER="admin@example.com"
 # ADMIN_PASS="admin"
 # PERSISTENT_PATH="/mnt/mydata"
-
-
-# /mnt/mydata
-echo "Enter persistence path (where external disk is mounted e.g /mnt/mydata):"
-read -r PERSISTENT_PATH
-
-
-# Are we running this script on node1 or on a separate server?
-echo "Are you running this script on node1 (yes/no)?"
-read -r ON_NODE1
-
-# SSH credentials (optional)
-echo "Enter SSH username:"
-read -r SSH_USER
-SSH_USER=${SSH_USER:-abhishek}
-echo "Enter SSH password for ${SSH_USER} (leave blank to use key-based auth):"
-read -r -s SSH_PASS
-echo
 
 
 # Configure SSH options: disable BatchMode when password is provided
@@ -107,7 +100,7 @@ run_cmd() {
             # provide sudo password on local execution
             echo "${SSH_PASS}" | sudo -S bash -lc "$cmd"
         else
-            bash -c "$cmd"
+            sudo bash -c "$cmd"
         fi
         return
     fi
@@ -174,42 +167,21 @@ done
 echo "Creating cluster on node1 ($NODE1) ..."
 sleep 10
 
-
 # Wait a short while for services to be up
 echo "Waiting for services to initialize on node1..."
 sleep 60
 
-# Attempt to create cluster using rladmin. This is a standard invocation; if it fails, output will show.
-#CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} --overwrite-existing "
-CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} --overwrite-existing "
-
+#CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} "
+CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} "
 run_cmd "$NODE1" "$CREATE_CLUSTER_CMD"
-
-echo
-echo "Cluster creation attempted. Admin user: ${ADMIN_USER}"
-echo "Admin password: ${ADMIN_PASS}"
-echo
-echo "If rladmin output indicated success, cluster should be forming. If not, SSH to ${NODE1} and use rladmin interactively:"
-echo "  sudo ${RLADMIN} cluster create name ${CLUSTER_FQDN} username ${ADMIN_USER} password <password> nodes ${NODE2} ${NODE3}"
-echo
-echo "Done."
 
 # Join node2 and node3 to the cluster on node1
 join_node() {
     local host="$1"
     echo "Joining ${host} to cluster at ${NODE1} ..."
 
-    # Wait until rladmin binary is present on the host
-    for i in {1..30}; do
-        if run_cmd "$host" "test -x '${RLADMIN}'"; then
-            break
-        fi
-        echo "Waiting for rladmin on ${host} (attempt ${i}/30)..."
-        sleep 5
-    done
-
-    #local join_cmd="sudo ${RLADMIN} cluster join nodes ${NODE1} ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} username ${ADMIN_USER} password ${ADMIN_PASS}"
-    local join_cmd="sudo ${RLADMIN} cluster join nodes ${NODE1} username ${ADMIN_USER} password ${ADMIN_PASS}"
+    #local join_cmd="sudo ${RLADMIN} cluster join nodes ${host} ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} username ${ADMIN_USER} password ${ADMIN_PASS}"
+    local join_cmd="sudo ${RLADMIN} cluster join nodes $NODE1 username ${ADMIN_USER} password ${ADMIN_PASS}"
 
     local attempt=1
     local max_attempts=5
