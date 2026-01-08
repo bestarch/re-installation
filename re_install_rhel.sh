@@ -71,7 +71,7 @@ fi
 PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
 echo "Preparing persistence directory: ${PERSIST_DIR}"
 
-# # Remove existing persist dir if present, then recreate (use sudo in case of root-owned mount)
+# Remove existing persist dir if present, then recreate (use sudo in case of root-owned mount)
 # sudo rm -rf -- "${PERSIST_DIR}" || true
 # sudo mkdir -p -- "${PERSIST_DIR}"
 # sudo chown "$(whoami)" "${PERSIST_DIR}" || true
@@ -141,6 +141,10 @@ ensure_prereqs() {
 preinstall_steps() {
     local host="$1"
     echo "Running pre-install steps on $host ..."
+
+    # Prepare persistence directory
+    run_cmd "$host" "sudo rm -rf ${PERSIST_DIR} || true; sudo mkdir -p ${PERSIST_DIR} || true; sudo chown -R $USER:$USER ${PERSIST_DIR} || true"
+    
     # 1. update /etc/sysctl.conf (append)
     run_cmd "$host" "sudo bash -c 'echo \"net.ipv4.ip_local_port_range = 30000 65535\" >> /etc/sysctl.conf'"
 
