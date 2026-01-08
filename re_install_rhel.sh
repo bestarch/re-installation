@@ -3,14 +3,7 @@
 
 set -euo pipefail
 
-echo "Enter installer tarball URL for RHEL 9 (leave blank to use default):"
-read -r INPUT_TARBALL
-if [[ -n "${INPUT_TARBALL}" ]]; then
-    TARBALL_URL="${INPUT_TARBALL}"
-else
-    # Default tarball (override with a proper RHEL tarball if you have one)
-    TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
-fi
+TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
 TARBALL_NAME="${TARBALL_URL##*/}"
 REMOTE_TMP="/tmp/${TARBALL_NAME}"
 INSTALL_DIR="/tmp/redis_enterprise_install"
