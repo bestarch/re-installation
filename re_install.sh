@@ -42,6 +42,7 @@ read -r ON_NODE1
 # ADMIN_USER="admin@example.com"
 # ADMIN_PASS="admin"
 # PERSISTENT_PATH="/mnt/mydata"
+# PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
 
 
 # Configure SSH options: disable BatchMode when password is provided
