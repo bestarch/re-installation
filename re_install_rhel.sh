@@ -45,7 +45,7 @@ ADMIN_PASS="admin"
 ON_NODE1="yes"
 SSH_USER="abhishek"
 SSH_PASS="Password@123"
-#PERSISTENT_PATH="/mnt/mydata"
+PERSISTENT_PATH="/mnt/mydata"
 #PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
 
 
@@ -57,19 +57,19 @@ else
 fi
 
 
-# # Ensure PERSISTENT_PATH is set and create/override the "persist" directory
-# if [[ -z "${PERSISTENT_PATH:-}" ]]; then
-#     echo "Error: PERSISTENT_PATH is not set." >&2
-#     exit 1
-# fi
+# Ensure PERSISTENT_PATH is set and create/override the "persist" directory
+if [[ -z "${PERSISTENT_PATH:-}" ]]; then
+    echo "Error: PERSISTENT_PATH is not set." >&2
+    exit 1
+fi
 
-# if [[ ! -d "${PERSISTENT_PATH}" ]]; then
-#     echo "Error: PERSISTENT_PATH '${PERSISTENT_PATH}' does not exist or is not a directory." >&2
-#     exit 1
-# fi
+if [[ ! -d "${PERSISTENT_PATH}" ]]; then
+    echo "Error: PERSISTENT_PATH '${PERSISTENT_PATH}' does not exist or is not a directory." >&2
+    exit 1
+fi
 
-# PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
-# echo "Preparing persistence directory: ${PERSIST_DIR}"
+PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
+echo "Preparing persistence directory: ${PERSIST_DIR}"
 
 # # Remove existing persist dir if present, then recreate (use sudo in case of root-owned mount)
 # sudo rm -rf -- "${PERSIST_DIR}" || true
@@ -202,8 +202,8 @@ sleep 10
 echo "Waiting for services to initialize on node1..."
 sleep 60
 
-#CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} "
-CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} "
+CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} "
+#CREATE_CLUSTER_CMD="sudo ${RLADMIN} cluster create name ${CLUSTER_FQDN} username ${ADMIN_USER} password ${ADMIN_PASS} "
 run_cmd "$NODE1" "$CREATE_CLUSTER_CMD"
 
 # Join node2 and node3 to the cluster on node1
@@ -211,8 +211,8 @@ join_node() {
     local host="$1"
     echo "Joining ${host} to cluster at ${NODE1} ..."
 
-    #local join_cmd="sudo ${RLADMIN} cluster join nodes ${host} ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} username ${ADMIN_USER} password ${ADMIN_PASS}"
-    local join_cmd="sudo ${RLADMIN} cluster join nodes $NODE1 username ${ADMIN_USER} password ${ADMIN_PASS}"
+    local join_cmd="sudo ${RLADMIN} cluster join nodes $NODE1 ccs_persistent_path ${PERSIST_DIR} persistent_path ${PERSIST_DIR} username ${ADMIN_USER} password ${ADMIN_PASS}"
+    #local join_cmd="sudo ${RLADMIN} cluster join nodes $NODE1 username ${ADMIN_USER} password ${ADMIN_PASS}"
 
     local attempt=1
     local max_attempts=5
