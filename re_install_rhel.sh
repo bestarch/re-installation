@@ -3,46 +3,56 @@
 
 set -euo pipefail
 
-TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
+echo "Enter installer tarball URL for RHEL 9 (leave blank to use default):"
+read -r INPUT_TARBALL
+if [[ -n "${INPUT_TARBALL}" ]]; then
+    TARBALL_URL="${INPUT_TARBALL}"
+else
+    # Default tarball (override with a proper RHEL tarball if you have one)
+    TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
+fi
 TARBALL_NAME="${TARBALL_URL##*/}"
 REMOTE_TMP="/tmp/${TARBALL_NAME}"
 INSTALL_DIR="/tmp/redis_enterprise_install"
 RLADMIN="/opt/redislabs/bin/rladmin"
 
-echo "Enter IP address of node1:"
-read -r NODE1
-echo "Enter IP address of node2:"
-read -r NODE2
-echo "Enter IP address of node3:"
-read -r NODE3
-echo "Enter FQDN for the cluster (example: mycluster.example.com):"
-read -r CLUSTER_FQDN
-echo "Enter Cluster Admin username (example: admin@example.com):"
-read -r ADMIN_USER
-echo "Enter Cluster Admin password:"
-read -r ADMIN_PASS
+# echo "Enter IP address of node1:"
+# read -r NODE1
+# echo "Enter IP address of node2:"
+# read -r NODE2
+# echo "Enter IP address of node3:"
+# read -r NODE3
+# echo "Enter FQDN for the cluster (example: mycluster.example.com):"
+# read -r CLUSTER_FQDN
+# echo "Enter Cluster Admin username (example: admin@example.com):"
+# read -r ADMIN_USER
+# echo "Enter Cluster Admin password:"
+# read -r ADMIN_PASS
 
-# SSH credentials (to login to nodes)
-echo "Enter SSH username:"
-read -r SSH_USER
-echo "Enter SSH password for ${SSH_USER} (leave blank to use key-based auth):"
-read -r -s SSH_PASS
+# # SSH credentials (to login to nodes)
+# echo "Enter SSH username:"
+# read -r SSH_USER
+# echo "Enter SSH password for ${SSH_USER} (leave blank to use key-based auth):"
+# read -r -s SSH_PASS
 
-echo "Enter persistence path (where external disk is mounted e.g /mnt/mydata):"
-read -r PERSISTENT_PATH
+# echo "Enter persistence path (where external disk is mounted e.g /mnt/mydata):"
+# read -r PERSISTENT_PATH
 
-# Are we running this script on node1 or on a separate server?
-echo "Are you running this script on node1 (yes/no)?"
-read -r ON_NODE1
+# # Are we running this script on node1 or on a separate server?
+# echo "Are you running this script on node1 (yes/no)?"
+# read -r ON_NODE1
 
-# NODE1="localhost"
-# NODE2="10.1.0.6"
-# NODE3="10.1.0.8"
-# CLUSTER_FQDN="mycluster.example.com"
-# ADMIN_USER="admin@example.com"
-# ADMIN_PASS="admin"
-# PERSISTENT_PATH="/mnt/mydata"
-# PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
+NODE1="10.1.0.12"
+NODE2="10.1.0.13"
+NODE3="10.1.0.14"
+CLUSTER_FQDN="mycluster.example.com"
+ADMIN_USER="admin@example.com"
+ADMIN_PASS="admin"
+ON_NODE1="yes"
+SSH_USER="abhishek"
+SSH_PASS="Password@123"
+#PERSISTENT_PATH="/mnt/mydata"
+#PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
 
 
 # Configure SSH options: disable BatchMode when password is provided
@@ -128,7 +138,7 @@ run_cmd() {
 ensure_prereqs() {
     local host="$1"
     echo "Ensuring prerequisites on ${host} (RHEL 9)..."
-    run_cmd "$host" "bash -lc 'if ! command -v dnf >/dev/null 2>&1; then echo "Error: dnf not found on target host" >&2; exit 1; fi; sudo dnf -y install wget tar || true'"
+    run_cmd "$host" "bash -lc 'if ! command -v dnf >/dev/null 2>&1; then echo "Error: dnf not found on target host" >&2; exit 1; fi; sudo dnf update -y || true; sudo dnf -y install wget tar || true'"
     if [[ -n "${SSH_PASS:-}" ]]; then
         run_cmd "$host" "sudo dnf -y install epel-release || true; sudo dnf -y install sshpass || true"
     fi
