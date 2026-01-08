@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
+#TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
+TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-7.8.4-18-rhel9-x86_64.tar"
 TARBALL_NAME="${TARBALL_URL##*/}"
 REMOTE_TMP="/tmp/${TARBALL_NAME}"
 INSTALL_DIR="/tmp/redis_enterprise_install"
