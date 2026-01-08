@@ -36,9 +36,9 @@ RLADMIN="/opt/redislabs/bin/rladmin"
 # echo "Are you running this script on node1 (yes/no)?"
 # read -r ON_NODE1
 
-NODE1="10.1.0.12"
-NODE2="10.1.0.13"
-NODE3="10.1.0.14"
+NODE1="10.1.0.15"
+NODE2="10.1.0.16"
+NODE3="10.1.0.17"
 CLUSTER_FQDN="mycluster.example.com"
 ADMIN_USER="admin@example.com"
 ADMIN_PASS="admin"
