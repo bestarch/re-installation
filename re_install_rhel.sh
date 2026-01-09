@@ -208,7 +208,7 @@ install_node() {
         -re {\\?} { send \"Y\r\"; exp_continue }
         eof
     }
-    EXPECT_EOF" || (echo 'Installer failed on $host' >&2; exit 1)"
+    EXPECT_EOF" || (echo 'Installer failed on $host' >&2; exit 1)
 }
 
 # Run preinstall and install on each node
