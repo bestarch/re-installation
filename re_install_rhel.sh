@@ -3,6 +3,7 @@
 
 set -euo pipefail
 
+
 #TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-8.0.6-54-rhel9-x86_64.tar"
 TARBALL_URL="https://storage.googleapis.com/abhi-data-2024/redislabs-7.8.4-18-rhel9-x86_64.tar"
 TARBALL_NAME="${TARBALL_URL##*/}"
@@ -22,6 +23,10 @@ RLADMIN="/opt/redislabs/bin/rladmin"
 # read -r ADMIN_USER
 # echo "Enter Cluster Admin password:"
 # read -r ADMIN_PASS
+echo "Do you want to set up NTP time synchronization (Y/N)?"
+read -r NTP_TIME_SYNC
+
+
 
 # # SSH credentials (to login to nodes)
 # echo "Enter SSH username:"
@@ -39,8 +44,8 @@ RLADMIN="/opt/redislabs/bin/rladmin"
 NODE1="10.1.0.15"
 NODE2="10.1.0.16"
 NODE3="10.1.0.17"
-CLUSTER_FQDN="mycluster.example.com"
-ADMIN_USER="admin@example.com"
+CLUSTER_FQDN="redis.dlqueue.com"
+ADMIN_USER="admin@dlqueue.com"
 ADMIN_PASS="admin"
 ON_NODE1="yes"
 SSH_USER="abhishek"
@@ -85,7 +90,14 @@ else
     EXEC_IS_LOCAL=false
 fi
 
-# Confirm before proceeding
+# Confirm before proceeding and normalize NTP choice
+if [[ "$NTP_TIME_SYNC" == "Y" || "$NTP_TIME_SYNC" == "y" ]]; then
+    echo "NTP time will be synced"
+    NTP_TIME_SYNC="Y"
+else
+    echo "NTP time will NOT be synced. If you haven't synced it manually, abort the installation and set it first."
+    NTP_TIME_SYNC="N"
+fi
 read -p "Proceed with installation on nodes $NODE1, $NODE2, $NODE3 and create cluster '$CLUSTER_FQDN' with admin user '$ADMIN_USER' and password '$ADMIN_PASS'? Type 'Y' to continue: " CONFIRM
 CONFIRM="$(echo "$CONFIRM" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')"
 if [ "$CONFIRM" != "Y" ]; then
@@ -132,7 +144,7 @@ run_cmd() {
 ensure_prereqs() {
     local host="$1"
     echo "Ensuring prerequisites on ${host} (RHEL 9)..."
-    run_cmd "$host" "bash -lc 'if ! command -v dnf >/dev/null 2>&1; then echo "Error: dnf not found on target host" >&2; exit 1; fi; sudo dnf update -y || true; sudo dnf -y install wget tar || true'"
+    run_cmd "$host" "bash -lc 'if ! command -v dnf >/dev/null 2>&1; then echo \"Error: dnf not found on target host\" >&2; exit 1; fi; sudo dnf update -y || true; sudo dnf -y install wget tar expect || true'"
     if [[ -n "${SSH_PASS:-}" ]]; then
         run_cmd "$host" "sudo dnf -y install epel-release || true; sudo dnf -y install sshpass || true"
     fi
@@ -187,8 +199,16 @@ install_node() {
     run_cmd "$host" "sudo mkdir -p ${INSTALL_DIR} && sudo chown \$(whoami) ${INSTALL_DIR}"
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
-    # find the extracted folder
-    run_cmd "$host" "cd ${INSTALL_DIR} && sudo ./install.sh -y || (echo 'Installer failed on $host' >&2; exit 1)"
+    # find the extracted folder and run installer with expect to answer NTP time prompt, others with Y
+    run_cmd "$host" "cd ${INSTALL_DIR} && expect <<'EXPECT_EOF'
+        spawn sudo ./install.sh
+        expect {
+            -re {NTP time} { send \"${NTP_TIME_SYNC}\r\"; exp_continue }
+            -re {\\?} { send \"Y\r\"; exp_continue }
+            eof
+        }
+        EXPECT_EOF
+        " || (echo 'Installer failed on $host' >&2; exit 1)"
 }
 
 # Run preinstall and install on each node
