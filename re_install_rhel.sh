@@ -23,8 +23,8 @@ RLADMIN="/opt/redislabs/bin/rladmin"
 # read -r ADMIN_USER
 # echo "Enter Cluster Admin password:"
 # read -r ADMIN_PASS
-echo "Do you want to set up NTP time synchronization (Y/N)?"
-read -r NTP_TIME_SYNC
+# echo "Do you want to set up NTP time synchronization (Y/N)?"
+# read -r NTP_TIME_SYNC
 
 
 
@@ -52,6 +52,7 @@ SSH_USER="abhishek"
 SSH_PASS="Password@123"
 PERSISTENT_PATH="/mnt/mydata"
 #PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
+NTP_TIME_SYNC="Y"
 
 
 # Configure SSH options: disable BatchMode when password is provided
@@ -201,14 +202,13 @@ install_node() {
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
     # find the extracted folder and run installer with expect to answer NTP time prompt, others with Y
     run_cmd "$host" "cd ${INSTALL_DIR} && expect <<'EXPECT_EOF'
-        spawn sudo ./install.sh
-        expect {
-            -re {NTP time} { send \"${NTP_TIME_SYNC}\r\"; exp_continue }
-            -re {\\?} { send \"Y\r\"; exp_continue }
-            eof
-        }
-        EXPECT_EOF
-        " || (echo 'Installer failed on $host' >&2; exit 1)"
+    spawn sudo ./install.sh
+    expect {
+        -re {NTP time} { send \"${NTP_TIME_SYNC}\r\"; exp_continue }
+        -re {\\?} { send \"Y\r\"; exp_continue }
+        eof
+    }
+    EXPECT_EOF" || (echo 'Installer failed on $host' >&2; exit 1)"
 }
 
 # Run preinstall and install on each node
