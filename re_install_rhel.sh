@@ -201,14 +201,22 @@ install_node() {
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
     # find the extracted folder and run installer with expect to answer NTP time prompt, others with Y
-    run_cmd "$host" "cd ${INSTALL_DIR} && expect <<'EXPECT_EOF'
-    spawn sudo ./install.sh
-    expect {
-        -re {NTP time} { send \"${NTP_TIME_SYNC}\r\"; exp_continue }
-        -re {\\?} { send \"Y\r\"; exp_continue }
-        eof
-    }
-    EXPECT_EOF" || (echo 'Installer failed on $host' >&2; exit 1)
+    # Build the expect script locally so ${NTP_TIME_SYNC} expands here, then transfer and run on remote
+    expect_script=$(cat <<'EOEXPECT'
+spawn sudo ./install.sh
+expect {
+    -re {NTP time} { send "__NTP_ANSWER__\r"; exp_continue }
+    -re {\?} { send "Y\r"; exp_continue }
+    eof
+}
+EOEXPECT
+
+    # replace placeholder with actual answer
+    expect_script="${expect_script//__NTP_ANSWER__/${NTP_TIME_SYNC}}"
+
+    # base64-encode and send to remote, decode, run expect, then cleanup
+    expect_b64=$(printf '%s' "$expect_script" | base64 | tr -d '\n')
+    run_cmd "$host" "cd ${INSTALL_DIR} && printf '%s' ${expect_b64} | base64 -d > /tmp/install_expect_$$.exp && sudo expect /tmp/install_expect_$$.exp || (echo 'Installer failed on $host' >&2; rm -f /tmp/install_expect_$$.exp; exit 1) && rm -f /tmp/install_expect_$$.exp"
 }
 
 # Run preinstall and install on each node
