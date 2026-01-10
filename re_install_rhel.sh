@@ -201,8 +201,9 @@ install_node() {
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
 
-
-    run_cmd "$host" "cd ${INSTALL_DIR} && sudo ./install.sh"
+    # Pipe 'Y' to respond to installer prompts, except use NTP_TIME_SYNC for the NTP prompt
+    local ntp_response="${NTP_TIME_SYNC}"
+    run_cmd "$host" "cd ${INSTALL_DIR} && (echo '${ntp_response}'; yes Y) | sudo ./install.sh || (echo 'Installer failed on $host' >&2; exit 1)"
     }
 
 # Run preinstall and install on each node
