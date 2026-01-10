@@ -205,14 +205,16 @@ install_node() {
     expect_script=$(cat <<'EOEXPECT'
 spawn sudo ./install.sh
 expect {
+    # If the installer asks specifically about NTP time, send the chosen answer
     -re {NTP time} { send "__NTP_ANSWER__\r"; exp_continue }
-    -re {\?} { send "Y\r"; exp_continue }
+    # For any general Y/N style prompts, send the same chosen answer rather than a hardcoded "Y"
+    -re {\(Y/N\)|\(y/n\)|\(yes/no\)|\?} { send "__NTP_ANSWER__\r"; exp_continue }
     eof
 }
 EOEXPECT
     )
 
-    # replace placeholder with actual answer
+    # replace placeholder with actual answer (NTP_TIME_SYNC is normalized to Y or N earlier)
     expect_script="${expect_script//__NTP_ANSWER__/${NTP_TIME_SYNC}}"
 
     # base64-encode and send to remote, decode, run expect, then cleanup
@@ -221,7 +223,7 @@ EOEXPECT
 }
 
 # Run preinstall and install on each node
-for h in "$NODE1" "$NODE2" "$NODE3"; do
+for h in "$NODE1" ; do
     preinstall_steps "$h"
     install_node "$h"
     sleep 5
