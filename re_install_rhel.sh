@@ -210,6 +210,7 @@ expect {
     eof
 }
 EOEXPECT
+    )
 
     # replace placeholder with actual answer
     expect_script="${expect_script//__NTP_ANSWER__/${NTP_TIME_SYNC}}"
