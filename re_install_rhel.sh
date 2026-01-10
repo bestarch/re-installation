@@ -202,7 +202,7 @@ install_node() {
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
 
 
-    run_cmd "$host" "cd ${INSTALL_DIR} && sudo ./install.sh  || (echo 'Installer failed on $host' >&2; exit 1)"
+    run_cmd "$host" "cd ${INSTALL_DIR} && sudo ./install.sh"
     }
 
 # Run preinstall and install on each node
