@@ -52,7 +52,7 @@ SSH_USER="abhishek"
 SSH_PASS="Password@123"
 PERSISTENT_PATH="/mnt/mydata"
 #PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
-NTP_TIME_SYNC="Y"
+NTP_TIME_SYNC="N"
 
 
 # Configure SSH options: disable BatchMode when password is provided
@@ -200,7 +200,7 @@ install_node() {
     run_cmd "$host" "sudo mkdir -p ${INSTALL_DIR} && sudo chown \$(whoami) ${INSTALL_DIR}"
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
-    # find the extracted folder and run installer with expect to answer NTP time prompt, others with Y
+
     # Build the expect script locally so ${NTP_TIME_SYNC} expands here, then transfer and run on remote
     expect_script=$(cat <<'EOEXPECT'
 spawn sudo ./install.sh
