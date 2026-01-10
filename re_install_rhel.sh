@@ -216,7 +216,7 @@ EOEXPECT
 
     # base64-encode and send to remote, decode, run expect, then cleanup
     expect_b64=$(printf '%s' "$expect_script" | base64 | tr -d '\n')
-    run_cmd "$host" "cd ${INSTALL_DIR} && printf '%s' ${expect_b64} | base64 -d > /tmp/install_expect_\$\$.exp && sudo expect /tmp/install_expect_\$\$.exp || (echo 'Installer failed on $host' >&2; rm -f /tmp/install_expect_\$\$.exp; exit 1) && rm -f /tmp/install_expect_\$\$.exp"
+    run_cmd "$host" "cd ${INSTALL_DIR} && printf '%s' \"${expect_b64}\" | base64 -d > /tmp/install_expect_$$.exp && sudo expect /tmp/install_expect_$$.exp || (echo 'Installer failed on $host' >&2; rm -f /tmp/install_expect_$$.exp; exit 1) && rm -f /tmp/install_expect_$$.exp"
 }
 
 # Run preinstall and install on each node
