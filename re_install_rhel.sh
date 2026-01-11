@@ -216,15 +216,15 @@ install_node() {
 #     exp_continue
 #   }
 #   eof
-}
+# }
 
-set status [wait]
-exit [lindex \$status 3]
-EOF
-" || {
-  echo "Installer failed on $host" >&2
-  exit 1
-}
+# set status [wait]
+# exit [lindex \$status 3]
+# EOF
+# " || {
+#   echo "Installer failed on $host" >&2
+#   exit 1
+# }
     
     }
 
