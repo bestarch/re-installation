@@ -205,6 +205,7 @@ install_node() {
     run_cmd "$host" "
 export INSTALL_DIR='${INSTALL_DIR}'
 export NTP_TIME_SYNC='${NTP_TIME_SYNC}'
+export SUDO_PASSWORD='${SSH_PASS}'
 
 expect <<'EOF'
 set timeout -1
@@ -213,23 +214,52 @@ cd \$env(INSTALL_DIR)
 spawn sudo ./install.sh
 
 expect {
+  # sudo password (only if sudo is not passwordless)
+  -re {(?i)password.*:} {
+    send \"\$env(SUDO_PASSWORD)\r\"
+    exp_continue
+  }
+
+  # Always YES: add Redis paths
+  -re {Add Redis-Enterprise paths to \$PATH variable.*} {
+    send \"Y\r\"
+    exp_continue
+  }
+
+  # ONLY user-driven input
   -re {Do you want to set up NTP time synchronization now.*} {
-    send \"\\\$env(NTP_TIME_SYNC)\\r\"
+    send \"\$env(NTP_TIME_SYNC)\r\"
     exp_continue
   }
+
+  # Always YES: rlcheck
+  -re {Would you like to run rlcheck.*} {
+    send \"Y\r\"
+    exp_continue
+  }
+
+  # Always ENTER
   -re {Press ENTER to continue.*} {
-    send \"\\r\"
+    send \"\r\"
     exp_continue
   }
-  -re {.*} {
-    send \"Y\\r\"
+
+  # Always YES: license / EULA
+  -re {(?i).*(accept|agree).*(license|eula).*} {
+    send \"Y\r\"
     exp_continue
   }
+
   eof
 }
 
+set status [wait]
+exit [lindex \$status 3]
 EOF
-" || { echo "Installer failed on $host" >&2; exit 1; }
+" || {
+  echo "Installer failed on $host" >&2
+  exit 1
+}
     
     }
 
