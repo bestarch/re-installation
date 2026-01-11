@@ -226,6 +226,13 @@ expect {
     exp_continue
   }
 
+  -re {We detected that firewalld is installed. To use Redis Enterprise with a local
+firewall we must open required network ports. Do you want to use the firewall and
+open the ports used by Redis Enterprise in the default firewall zone.*} {
+    send \"Y\r\"
+    exp_continue
+  }
+
   # ONLY user-driven input
   -re {Do you want to set up NTP time synchronization now.*} {
     send \"\$env(NTP_TIME_SYNC)\r\"
