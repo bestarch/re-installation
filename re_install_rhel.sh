@@ -221,6 +221,11 @@ expect {
     exp_continue
   }
 
+  -re {The group 'redislabs' already exists, which may lead to problems if it wasn't configured correctly. Would you like to proceed with the installation.*} {
+    send \"Y\r\"
+    exp_continue
+  }
+
   # ONLY user-driven input
   -re {Do you want to set up NTP time synchronization now.*} {
     send \"\$env(NTP_TIME_SYNC)\r\"
