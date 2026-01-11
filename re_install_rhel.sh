@@ -226,9 +226,7 @@ expect {
     exp_continue
   }
 
-  -re {We detected that firewalld is installed. To use Redis Enterprise with a local
-firewall we must open required network ports. Do you want to use the firewall and
-open the ports used by Redis Enterprise in the default firewall zone.*} {
+  -re {We detected that firewalld is installed.*} {
     send \"Y\r\"
     exp_continue
   }
