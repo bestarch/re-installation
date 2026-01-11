@@ -214,15 +214,15 @@ spawn sudo ./install.sh
 
 expect {
   -re {Do you want to set up NTP time synchronization now.*} {
-    send "$env(NTP_TIME_SYNC)\r"
+    send \"\\\$env(NTP_TIME_SYNC)\\r\"
     exp_continue
   }
   -re {Press ENTER to continue.*} {
-    send "\r"
+    send \"\\r\"
     exp_continue
   }
   -re {.*} {
-    send "Y\r"
+    send \"Y\\r\"
     exp_continue
   }
   eof
@@ -231,7 +231,7 @@ expect {
 set status [wait]
 exit [lindex \$status 3]
 EOF
-" || (echo "Installer failed on $host" >&2;exit 1)
+" || { echo "Installer failed on $host" >&2; exit 1; }
     
     }
 
