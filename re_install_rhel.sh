@@ -201,30 +201,27 @@ install_node() {
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
 
-    run_cmd "$host" "cd ${INSTALL_DIR} && spawn sudo ./install.sh || (echo 'Installer failed on $host' >&2; exit 1)"
-#     run_cmd "$host" "
-# export INSTALL_DIR='${INSTALL_DIR}'
+    #run_cmd "$host" "cd ${INSTALL_DIR} && spawn sudo ./install.sh || (echo 'Installer failed on $host' >&2; exit 1)"
+    run_cmd "$host" "
+export INSTALL_DIR='${INSTALL_DIR}'
 
-# expect <<'EOF'
-# set timeout -1
+expect <<'EOF'
+set timeout -1
 
-# cd \$env(INSTALL_DIR)
-# spawn sudo ./install.sh
+cd \$env(INSTALL_DIR)
+spawn sudo ./install.sh
 
-# expect {
-#   -re {Do you want to set up NTP time synchronization now.*} {
-#     exp_continue
-#   }
-#   eof
-# }
+expect {
+  -re {Do you want to set up NTP time synchronization now.*} {
+    exp_continue
+  }
+  eof
+}
 
-# set status [wait]
-# exit [lindex \$status 3]
-# EOF
-# " || {
-#   echo "Installer failed on $host" >&2
-#   exit 1
-# }
+set status [wait]
+exit [lindex \$status 3]
+EOF
+" || (echo "Installer failed on $host" >&2;exit 1)
     
     }
 
