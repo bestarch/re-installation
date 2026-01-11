@@ -211,13 +211,6 @@ set timeout -1
 cd \$env(INSTALL_DIR)
 spawn sudo ./install.sh
 
-expect {
-  -re {Do you want to set up NTP time synchronization now.*} {
-    exp_continue
-  }
-  eof
-}
-
 set status [wait]
 exit [lindex \$status 3]
 EOF
