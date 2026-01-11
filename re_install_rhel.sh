@@ -204,12 +204,29 @@ install_node() {
     #run_cmd "$host" "cd ${INSTALL_DIR} && spawn sudo ./install.sh || (echo 'Installer failed on $host' >&2; exit 1)"
     run_cmd "$host" "
 export INSTALL_DIR='${INSTALL_DIR}'
+export NTP_TIME_SYNC='${NTP_TIME_SYNC}'
 
 expect <<'EOF'
 set timeout -1
 
 cd \$env(INSTALL_DIR)
 spawn sudo ./install.sh
+
+expect {
+  -re {Do you want to set up NTP time synchronization now.*} {
+    send "$env(NTP_TIME_SYNC)\r"
+    exp_continue
+  }
+  -re {Press ENTER to continue.*} {
+    send "\r"
+    exp_continue
+  }
+  -re {.*} {
+    send "Y\r"
+    exp_continue
+  }
+  eof
+}
 
 set status [wait]
 exit [lindex \$status 3]
