@@ -52,7 +52,7 @@ SSH_USER="abhishek"
 SSH_PASS="Password@123"
 PERSISTENT_PATH="/mnt/mydata"
 #PERSIST_DIR="${PERSISTENT_PATH%/}/persist"
-NTP_TIME_SYNC="N"
+NTP_TIME_SYNC="Y"
 
 
 # Configure SSH options: disable BatchMode when password is provided
@@ -269,7 +269,7 @@ EOF
     }
 
 # Run preinstall and install on each node
-for h in "$NODE1" ; do
+for h in "$NODE1" "$NODE2" "$NODE3"; do
     preinstall_steps "$h"
     install_node "$h"
     sleep 5
