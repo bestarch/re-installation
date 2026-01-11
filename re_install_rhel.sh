@@ -147,7 +147,7 @@ ensure_prereqs() {
     echo "Ensuring prerequisites on ${host} (RHEL 9)..."
     run_cmd "$host" "bash -lc 'if ! command -v dnf >/dev/null 2>&1; then echo \"Error: dnf not found on target host\" >&2; exit 1; fi; sudo dnf update -y || true; sudo dnf -y install wget tar expect || true'"
     if [[ -n "${SSH_PASS:-}" ]]; then
-        run_cmd "$host" "sudo dnf -y install epel-release || true; sudo dnf -y install sshpass || true"
+        run_cmd "$host" "sudo dnf -y install sshpass || true"
     fi
 }
 
