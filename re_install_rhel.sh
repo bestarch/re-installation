@@ -133,7 +133,7 @@ run_cmd() {
             exit 1
         fi
         echo "Using sshpass to connect to ${target}"
-        sshpass -p "${SSH_PASS}" ssh $SSH_OPTS ${target} "$cmd"
+        sshpass -p "${SSH_PASS}" ssh -tt $SSH_OPTS ${target} "$cmd"
         
     else
         # Key-based auth path
@@ -201,9 +201,31 @@ install_node() {
     run_cmd "$host" "rm -f ${REMOTE_TMP} || true && wget -q -O ${REMOTE_TMP} '${TARBALL_URL}'"
     run_cmd "$host" "mkdir -p ${INSTALL_DIR} && tar -xf ${REMOTE_TMP} -C ${INSTALL_DIR}"
 
+    run_cmd "$host" "
+export INSTALL_DIR='${INSTALL_DIR}'
+
+expect <<'EOF'
+set timeout -1
+
+cd \$env(INSTALL_DIR)
+spawn sudo ./install.sh
+
+expect {
+  -re {Do you want to set up NTP time synchronization now.*} {
+    send \"Y\r\"
+    exp_continue
+  }
+  eof
+}
+
+set status [wait]
+exit [lindex \$status 3]
+EOF
+" || {
+  echo "Installer failed on $host" >&2
+  exit 1
+}
     
-    echo "Running installer on ${host}. Please respond to any prompts from the install script."
-    run_cmd "$host" "cd ${INSTALL_DIR} && sudo ./install.sh; if [ \$? -ne 0 ]; then echo 'Installer failed on $host' >&2; exit 1; fi"
     }
 
 # Run preinstall and install on each node
