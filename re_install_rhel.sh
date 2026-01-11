@@ -214,14 +214,9 @@ cd \$env(INSTALL_DIR)
 spawn sudo ./install.sh
 
 expect {
-  # sudo password (only if sudo is not passwordless)
-  -re {(?i)password.*:} {
-    send \"\$env(SUDO_PASSWORD)\r\"
-    exp_continue
-  }
 
   # Always YES: add Redis paths
-  -re {Add Redis-Enterprise paths to \$PATH variable.*} {
+  -re {The user 'redislabs' already exists, which may lead to problems if it wasn't configured correctly. Would you like to proceed with the installation.*} {
     send \"Y\r\"
     exp_continue
   }
